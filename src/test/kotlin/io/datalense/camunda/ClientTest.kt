@@ -40,7 +40,23 @@ class ClientTest {
     @test fun externalTaskGet_Ok() {
         val id = "1"
         val taskJson = """{
-            "id": $id
+            "activityId": "",
+            "activityInstanceId": "",
+            "errorMessage": "",
+            "errorDetails": "",
+            "executionId": "",
+            "id": $id,
+            "lockExpirationTime": "",
+            "processDefinitionId": "",
+            "processDefinitionKey": "",
+            "processInstanceId": "",
+            "tenantId": "",
+            "retries": "",
+            "suspended": false,
+            "workerId": "",
+            "priority": 0,
+            "topicName": "",
+            "businessKey": ""
         }""".trimIndent()
 
         wireMockServer.stubFor(get(urlMatching(".*/external-task/$id"))
@@ -52,6 +68,26 @@ class ClientTest {
 
         val client = Client("http://localhost:$port/engine-rest")
         val task = client.externalTask.get(id)
-        assertEquals(Gson().fromJson(taskJson, ExternalTask::class.java).id, task?.id)
+        task?.let { t ->
+            val task = Gson().fromJson(taskJson, ExternalTask::class.java)
+            assertEquals(task.activityId, t.activityId)
+            assertEquals(task.activityInstanceId, t.activityInstanceId)
+            assertEquals(task.errorMessage, t.errorMessage)
+            assertEquals(task.errorDetails, t.errorDetails)
+            assertEquals(task.executionId, t.executionId)
+            assertEquals(task.id, t.id)
+            assertEquals(task.lockExpirationTime, t.lockExpirationTime)
+            assertEquals(task.processDefinitionId, t.processDefinitionId)
+            assertEquals(task.processDefinitionKey, t.processDefinitionKey)
+            assertEquals(task.processInstanceId, t.processInstanceId)
+            assertEquals(task.tenantId, t.tenantId)
+            assertEquals(task.retries, t.retries)
+            assertEquals(task.suspended, t.suspended)
+            assertEquals(task.workerId, t.workerId)
+            assertEquals(task.priority, t.priority)
+            assertEquals(task.topicName, t.topicName)
+            assertEquals(task.businessKey, t.businessKey)
+        }
+
     }
 }
