@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import kotlin.random.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test as test
 
 class ClientTest {
@@ -89,5 +90,38 @@ class ClientTest {
             assertEquals(task.businessKey, t.businessKey)
         }
 
+    }
+
+    @test fun fetchAndLock_Ok() {
+        val tasksJson = """[{
+            "id": "1",
+            "variables": {
+                "variableName": {
+                    "value": "some",
+                    "type": "String"
+                }
+            }
+        }]""".trimIndent()
+
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/fetchAndLock"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(200)
+                    .withBody(tasksJson)))
+
+        val topics = arrayOf(Topic("topicName", 1000, arrayOf("variableName")))
+        val request = FetchAndLockRequest("workerId", 1, topics)
+        val client = Client("http://localhost:$port/engine-rest")
+        val tasks = client.externalTask.fetchAndLock(request)
+
+        tasks?.let { t ->
+            assertEquals(1, t.size)
+            val task = t[0]
+            assertTrue(task.variables.containsKey("variableName"))
+            val variable = task.variables["variableName"]
+            assertEquals("some", variable?.value)
+            assertEquals("String", variable?.type)
+        }
     }
 }
