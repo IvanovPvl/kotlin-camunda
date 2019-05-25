@@ -1,5 +1,7 @@
 # kotlin-camunda
 
+[![Build Status](https://travis-ci.org/IvanovPvl/kotlin-camunda.svg?branch=master)](https://travis-ci.org/IvanovPvl/kotlin-camunda)
+
 > A Kotlin client for Camunda Rest Api
 
 ## Install
