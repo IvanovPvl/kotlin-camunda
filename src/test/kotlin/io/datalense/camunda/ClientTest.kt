@@ -7,6 +7,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import kotlin.random.Random
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.Test as test
@@ -30,12 +31,24 @@ class ClientTest {
 
     @test fun externalTaskGet_NotFound() {
         val id = "1"
+        val errorJson = """{
+            "type": "NotFoundException",
+            "message": "External task not found"
+        }""".trimIndent()
+
         wireMockServer.stubFor(get(urlMatching(".*/external-task/$id"))
-            .willReturn(aResponse().withStatus(404)))
+            .willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBody(errorJson)
+                .withStatus(404)))
 
         val client = Client("http://localhost:$port/engine-rest")
-        val task = client.externalTask.get(id)
+        val (task, error) = client.externalTask.get(id)
         assertNull(task)
+        assertNotNull(error)
+
+        val e = Gson().fromJson(errorJson, Error::class.java)
+        assertEquals(e, error)
     }
 
     @test fun externalTaskGet_Ok() {
@@ -68,8 +81,8 @@ class ClientTest {
                     .withBody(taskJson)))
 
         val client = Client("http://localhost:$port/engine-rest")
-        val task = client.externalTask.get(id)
-        task?.let { t ->
+        val (ex, _) = client.externalTask.get(id)
+        ex?.let { t ->
             val task = Gson().fromJson(taskJson, ExternalTask::class.java)
             assertEquals(task.activityId, t.activityId)
             assertEquals(task.activityInstanceId, t.activityInstanceId)

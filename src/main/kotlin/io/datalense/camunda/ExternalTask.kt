@@ -4,6 +4,7 @@ import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
+import com.google.gson.Gson
 
 /**
  * Represent Camunda external task
@@ -50,7 +51,7 @@ interface ExternalTaskService {
     /**
      * Get [ExternalTask] by [id]
      */
-    fun get(id: String): ExternalTask?
+    fun get(id: String): Result<ExternalTask>
 
     /**
      * Fetches and locks a specific number of external tasks for execution by a worker
@@ -59,12 +60,14 @@ interface ExternalTaskService {
 }
 
 class ExternalTaskServiceImpl : ExternalTaskService {
-    override fun get(id: String): ExternalTask? {
+    override fun get(id: String): Result<ExternalTask> {
         val (_, _, result) = "/external-task/$id".httpGet()
             .responseObject<ExternalTask>()
 
-        val (task, _) = result
-        return task
+        return result.fold({ Result.success(it) }, { e ->
+            val errorString = String(e.errorData)
+            Result.failure(Gson().fromJson(errorString, Error::class.java))
+        })
     }
 
     override fun fetchAndLock(request: FetchAndLockRequest): Array<ExternalTask>? {
