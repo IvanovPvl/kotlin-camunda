@@ -160,4 +160,42 @@ class ClientTest {
         val e = Gson().fromJson(errorJson, Error::class.java)
         assertEquals(e, error)
     }
+
+    @test fun complete_Ok() {
+        val id = "1"
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/complete"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(200)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val variables = mapOf("some" to Variable("value", "String"))
+        val (response, error) = client.externalTask.complete(id, CompleteRequest("workerId", variables))
+        assertEquals(Unit, response)
+        assertNull(error)
+    }
+
+    @test fun complete_Error() {
+        val id = "1"
+        val errorJson = """{
+            "type": "ServerError",
+            "message": "Internal server error"
+        }""".trimIndent()
+
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/complete"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(500)
+                    .withBody(errorJson)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val variables = mapOf("some" to Variable("value", "String"))
+        val (response, error) = client.externalTask.complete(id, CompleteRequest("workerId", variables))
+        assertNull(response)
+
+        val e = Gson().fromJson(errorJson, Error::class.java)
+        assertEquals(e, error)
+    }
 }

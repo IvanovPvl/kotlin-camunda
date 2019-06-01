@@ -47,16 +47,26 @@ data class Variable(
     val type: String
 )
 
+data class CompleteRequest(
+    val workerId: String,
+    val variables: Map<String, Variable>
+)
+
 interface ExternalTaskService {
     /**
-     * Get [ExternalTask] by [id]
+     * Get [ExternalTask] by [id].
      */
     fun get(id: String): Result<ExternalTask>
 
     /**
-     * Fetches and locks a specific number of external tasks for execution by a worker
+     * Fetches and locks a specific number of external tasks for execution by a worker.
      */
     fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>>
+
+    /**
+     * Complete an external task and update process variables.
+     */
+    fun complete(id: String, request: CompleteRequest): Result<Unit>
 }
 
 class ExternalTaskServiceImpl : ExternalTaskService {
@@ -76,6 +86,17 @@ class ExternalTaskServiceImpl : ExternalTaskService {
             .responseObject<Array<ExternalTask>>()
 
         return result.fold({ Result.success(it) }, { e ->
+            val errorString = String(e.errorData)
+            Result.failure(Gson().fromJson(errorString, Error::class.java))
+        })
+    }
+
+    override fun complete(id: String, request: CompleteRequest): Result<Unit> {
+        val (_, _, result) = "/external-task/$id/complete".httpPost()
+            .jsonBody(request)
+            .response()
+
+        return result.fold({ Result.success(Unit) }, { e ->
             val errorString = String(e.errorData)
             Result.failure(Gson().fromJson(errorString, Error::class.java))
         })
