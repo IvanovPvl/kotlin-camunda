@@ -164,10 +164,7 @@ class ClientTest {
     @test fun complete_Ok() {
         val id = "1"
         wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/complete"))
-            .willReturn(
-                aResponse()
-                    .withHeader("Content-Type", "application/json")
-                    .withStatus(200)))
+            .willReturn(aResponse().withStatus(200)))
 
         val client = Client("http://localhost:$port/engine-rest")
         val variables = mapOf("some" to Variable("value", "String"))
@@ -202,10 +199,7 @@ class ClientTest {
     @test fun handleFailure_Ok() {
         val id = "1"
         wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/failure"))
-            .willReturn(
-                aResponse()
-                    .withHeader("Content-Type", "application/json")
-                    .withStatus(200)))
+            .willReturn(aResponse().withStatus(204)))
 
         val client = Client("http://localhost:$port/engine-rest")
         val request = HandleFailureRequest("workerId", "Error", 1, 1000)
@@ -231,6 +225,39 @@ class ClientTest {
         val client = Client("http://localhost:$port/engine-rest")
         val request = HandleFailureRequest("workerId", "Error", 1, 1000)
         val (response, error) = client.externalTask.handleFailure(id, request)
+        assertNull(response)
+
+        val e = Gson().fromJson(errorJson, Error::class.java)
+        assertEquals(e, error)
+    }
+
+    @test fun handleUnlock_Ok() {
+        val id = "1"
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/unlock"))
+            .willReturn(aResponse().withStatus(204)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val (response, error) = client.externalTask.unlock(id)
+        assertEquals(Unit, response)
+        assertNull(error)
+    }
+
+    @test fun handleUnlock_Error() {
+        val id = "1"
+        val errorJson = """{
+            "type": "ServerError",
+            "message": "Internal server error"
+        }""".trimIndent()
+
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/unlock"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(500)
+                    .withBody(errorJson)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val (response, error) = client.externalTask.unlock(id)
         assertNull(response)
 
         val e = Gson().fromJson(errorJson, Error::class.java)

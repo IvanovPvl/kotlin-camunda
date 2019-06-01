@@ -31,28 +31,43 @@ data class ExternalTask(
     val variables: Map<String, Variable>
 )
 
+/**
+ * Represent Camunda topic
+ */
 data class Topic(
     val topicName: String,
     val lockDuration: Int,
     val variables: Array<String>
 )
 
+/**
+ * Request object for [ExternalTaskService.fetchAndLock]
+ */
 data class FetchAndLockRequest(
     val workerId: String,
     val maxTasks: Int,
     val topics: Array<Topic>
 )
 
+/**
+ * Represent Camunda variable
+ */
 data class Variable(
     val value: Any,
     val type: String
 )
 
+/**
+ * Request object for [ExternalTaskService.complete]
+ */
 data class CompleteRequest(
     val workerId: String,
     val variables: Map<String, Variable>
 )
 
+/**
+ * Request object for [ExternalTaskService.handleFailure]
+ */
 data class HandleFailureRequest(
     val workerId: String,
     val errorMessage: String,
@@ -80,6 +95,11 @@ interface ExternalTaskService {
      * Report a failure to execute an external task.
      */
     fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit>
+
+    /**
+     * Unlock an external task. Clears the task’s lock expiration time and worker id.
+     */
+    fun unlock(id: String): Result<Unit>
 }
 
 class ExternalTaskServiceImpl : ExternalTaskService {
@@ -111,6 +131,11 @@ class ExternalTaskServiceImpl : ExternalTaskService {
             .jsonBody(request)
             .response()
 
+        return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
+    }
+
+    override fun unlock(id: String): Result<Unit> {
+        val (_, _, result) = "/external-task/$id/unlock".httpPost().response()
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
