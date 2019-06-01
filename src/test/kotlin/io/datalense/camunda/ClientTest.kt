@@ -81,7 +81,7 @@ class ClientTest {
                     .withBody(taskJson)))
 
         val client = Client("http://localhost:$port/engine-rest")
-        val (ex, _) = client.externalTask.get(id)
+        val (ex, error) = client.externalTask.get(id)
         ex?.let { t ->
             val task = Gson().fromJson(taskJson, ExternalTask::class.java)
             assertEquals(task.activityId, t.activityId)
@@ -102,7 +102,7 @@ class ClientTest {
             assertEquals(task.topicName, t.topicName)
             assertEquals(task.businessKey, t.businessKey)
         }
-
+        assertNull(error)
     }
 
     @test fun fetchAndLock_Ok() {
@@ -126,7 +126,7 @@ class ClientTest {
         val topics = arrayOf(Topic("topicName", 1000, arrayOf("variableName")))
         val request = FetchAndLockRequest("workerId", 1, topics)
         val client = Client("http://localhost:$port/engine-rest")
-        val tasks = client.externalTask.fetchAndLock(request)
+        val (tasks, error) = client.externalTask.fetchAndLock(request)
 
         tasks?.let { t ->
             assertEquals(1, t.size)
@@ -136,5 +136,28 @@ class ClientTest {
             assertEquals("some", variable?.value)
             assertEquals("String", variable?.type)
         }
+        assertNull(error)
+    }
+
+    @test fun fetchAndLock_Error() {
+        val errorJson = """{
+            "type": "ServerError",
+            "message": "Internal server error"
+        }""".trimIndent()
+
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/fetchAndLock"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(500)
+                    .withBody(errorJson)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val (tasks, error) = client.externalTask.fetchAndLock(FetchAndLockRequest("", 0, emptyArray()))
+        assertNull(tasks)
+        assertNotNull(error)
+
+        val e = Gson().fromJson(errorJson, Error::class.java)
+        assertEquals(e, error)
     }
 }
