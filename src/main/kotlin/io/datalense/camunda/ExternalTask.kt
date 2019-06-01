@@ -1,5 +1,6 @@
 package io.datalense.camunda
 
+import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.fuel.httpGet
@@ -74,10 +75,7 @@ class ExternalTaskServiceImpl : ExternalTaskService {
         val (_, _, result) = "/external-task/$id".httpGet()
             .responseObject<ExternalTask>()
 
-        return result.fold({ Result.success(it) }, { e ->
-            val errorString = String(e.errorData)
-            Result.failure(Gson().fromJson(errorString, Error::class.java))
-        })
+        return result.fold({ Result.success(it) }, (ExternalTaskServiceImpl)::failure)
     }
 
     override fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>> {
@@ -85,10 +83,7 @@ class ExternalTaskServiceImpl : ExternalTaskService {
             .jsonBody(request)
             .responseObject<Array<ExternalTask>>()
 
-        return result.fold({ Result.success(it) }, { e ->
-            val errorString = String(e.errorData)
-            Result.failure(Gson().fromJson(errorString, Error::class.java))
-        })
+        return result.fold({ Result.success(it) }, (ExternalTaskServiceImpl)::failure)
     }
 
     override fun complete(id: String, request: CompleteRequest): Result<Unit> {
@@ -96,9 +91,15 @@ class ExternalTaskServiceImpl : ExternalTaskService {
             .jsonBody(request)
             .response()
 
-        return result.fold({ Result.success(Unit) }, { e ->
+        return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
+    }
+
+    companion object {
+        private val gson: Gson by lazy { Gson() }
+
+        fun failure(e: FuelError): Result.Failure {
             val errorString = String(e.errorData)
-            Result.failure(Gson().fromJson(errorString, Error::class.java))
-        })
+            return Result.failure(gson.fromJson(errorString, Error::class.java))
+        }
     }
 }
