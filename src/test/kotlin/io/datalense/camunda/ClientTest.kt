@@ -198,4 +198,42 @@ class ClientTest {
         val e = Gson().fromJson(errorJson, Error::class.java)
         assertEquals(e, error)
     }
+
+    @test fun handleFailure_Ok() {
+        val id = "1"
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/failure"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(200)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val request = HandleFailureRequest("workerId", "Error", 1, 1000)
+        val (response, error) = client.externalTask.handleFailure(id, request)
+        assertEquals(Unit, response)
+        assertNull(error)
+    }
+
+    @test fun handleFailure_Error() {
+        val id = "1"
+        val errorJson = """{
+            "type": "ServerError",
+            "message": "Internal server error"
+        }""".trimIndent()
+
+        wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/failure"))
+            .willReturn(
+                aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withStatus(500)
+                    .withBody(errorJson)))
+
+        val client = Client("http://localhost:$port/engine-rest")
+        val request = HandleFailureRequest("workerId", "Error", 1, 1000)
+        val (response, error) = client.externalTask.handleFailure(id, request)
+        assertNull(response)
+
+        val e = Gson().fromJson(errorJson, Error::class.java)
+        assertEquals(e, error)
+    }
 }

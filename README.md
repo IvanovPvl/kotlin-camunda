@@ -13,7 +13,7 @@ Simply clone this repository.
 
 ```kotlin
 val client = Client("http://localhost:8080/engine-rest")
-val (task, _) = client.externalTask.get("1")
+val (task, error) = client.externalTask.get("1")
 ```
 
 ## License

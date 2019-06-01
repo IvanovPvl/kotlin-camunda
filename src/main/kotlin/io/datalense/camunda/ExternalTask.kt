@@ -53,6 +53,13 @@ data class CompleteRequest(
     val variables: Map<String, Variable>
 )
 
+data class HandleFailureRequest(
+    val workerId: String,
+    val errorMessage: String,
+    val retries: Int,
+    val retryTimeout: Int
+)
+
 interface ExternalTaskService {
     /**
      * Get [ExternalTask] by [id].
@@ -68,6 +75,11 @@ interface ExternalTaskService {
      * Complete an external task and update process variables.
      */
     fun complete(id: String, request: CompleteRequest): Result<Unit>
+
+    /**
+     * Report a failure to execute an external task.
+     */
+    fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit>
 }
 
 class ExternalTaskServiceImpl : ExternalTaskService {
@@ -94,10 +106,18 @@ class ExternalTaskServiceImpl : ExternalTaskService {
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
+    override fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit> {
+        val (_, _, result) = "/external-task/$id/failure".httpPost()
+            .jsonBody(request)
+            .response()
+
+        return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
+    }
+
     companion object {
         private val gson: Gson by lazy { Gson() }
 
-        fun failure(e: FuelError): Result.Failure {
+        private fun failure(e: FuelError): Result.Failure {
             val errorString = String(e.errorData)
             return Result.failure(gson.fromJson(errorString, Error::class.java))
         }
