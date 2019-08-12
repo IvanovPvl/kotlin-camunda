@@ -1,5 +1,7 @@
 package io.datalense.camunda
 
+class ResultException(message: String) : Exception(message)
+
 data class Error(val type: String, val message: String)
 
 sealed class Result<out V : Any> {
@@ -16,7 +18,7 @@ sealed class Result<out V : Any> {
     }
 
     class Failure(private val error: Error) : Result<Nothing>() {
-        override fun get(): Nothing = throw Exception(error.message)
+        override fun get(): Nothing = throw ResultException(error.message)
 
         override fun component2(): Error? = error
     }

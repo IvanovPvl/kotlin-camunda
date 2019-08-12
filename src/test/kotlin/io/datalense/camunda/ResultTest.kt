@@ -1,7 +1,6 @@
 package io.datalense.camunda
 
 import org.junit.jupiter.api.assertThrows
-import java.lang.Exception
 import kotlin.test.*
 import org.junit.jupiter.api.Test as test
 
@@ -23,6 +22,6 @@ class ResultTest {
         assertNull(r)
         assertNotNull(e)
         assertEquals(error, e)
-        assertThrows<Exception>(error.message) { result.get() }
+        assertThrows<ResultException>(error.message) { result.get() }
     }
 }
