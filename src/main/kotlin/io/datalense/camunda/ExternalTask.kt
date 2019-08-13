@@ -5,6 +5,7 @@ import com.github.kittinunf.fuel.gson.jsonBody
 import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
+import com.github.kittinunf.result.Result
 import com.google.gson.Gson
 
 /**
@@ -79,38 +80,38 @@ interface ExternalTaskService {
     /**
      * Get [ExternalTask] by [id].
      */
-    fun get(id: String): Result<ExternalTask>
+    fun get(id: String): Result<ExternalTask, CamundaException>
 
     /**
      * Fetches and locks a specific number of external tasks for execution by a worker.
      */
-    fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>>
+    fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>, CamundaException>
 
     /**
      * Complete an external task and update process variables.
      */
-    fun complete(id: String, request: CompleteRequest): Result<Unit>
+    fun complete(id: String, request: CompleteRequest): Result<Unit, CamundaException>
 
     /**
      * Report a failure to execute an external task.
      */
-    fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit>
+    fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit, CamundaException>
 
     /**
      * Unlock an external task. Clears the task’s lock expiration time and worker id.
      */
-    fun unlock(id: String): Result<Unit>
+    fun unlock(id: String): Result<Unit, CamundaException>
 }
 
 class ExternalTaskServiceImpl : ExternalTaskService {
-    override fun get(id: String): Result<ExternalTask> {
+    override fun get(id: String): Result<ExternalTask, CamundaException> {
         val (_, _, result) = "/external-task/$id".httpGet()
             .responseObject<ExternalTask>()
 
         return result.fold({ Result.success(it) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>> {
+    override fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>, CamundaException> {
         val (_, _, result) = "/external-task/fetchAndLock".httpPost()
             .jsonBody(request)
             .responseObject<Array<ExternalTask>>()
@@ -118,7 +119,7 @@ class ExternalTaskServiceImpl : ExternalTaskService {
         return result.fold({ Result.success(it) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun complete(id: String, request: CompleteRequest): Result<Unit> {
+    override fun complete(id: String, request: CompleteRequest): Result<Unit, CamundaException> {
         val (_, _, result) = "/external-task/$id/complete".httpPost()
             .jsonBody(request)
             .response()
@@ -126,7 +127,7 @@ class ExternalTaskServiceImpl : ExternalTaskService {
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit> {
+    override fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit, CamundaException> {
         val (_, _, result) = "/external-task/$id/failure".httpPost()
             .jsonBody(request)
             .response()
@@ -134,7 +135,7 @@ class ExternalTaskServiceImpl : ExternalTaskService {
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun unlock(id: String): Result<Unit> {
+    override fun unlock(id: String): Result<Unit, CamundaException> {
         val (_, _, result) = "/external-task/$id/unlock".httpPost().response()
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
@@ -142,9 +143,10 @@ class ExternalTaskServiceImpl : ExternalTaskService {
     companion object {
         private val gson: Gson by lazy { Gson() }
 
-        private fun failure(e: FuelError): Result.Failure {
+        private fun failure(e: FuelError): Result.Failure<CamundaException> {
             val errorString = String(e.errorData)
-            return Result.failure(gson.fromJson(errorString, Error::class.java))
+            val error = gson.fromJson(errorString, CamundaException::class.java)
+            return Result.error(error)
         }
     }
 }

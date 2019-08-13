@@ -18,3 +18,7 @@ class Client(path: String, timeout: Int = 5000) {
      */
     val externalTask: ExternalTaskService = ExternalTaskServiceImpl()
 }
+
+data class Error(val type: String, val message: String)
+
+class CamundaException(val type: String, override val message: String) : Exception(message)

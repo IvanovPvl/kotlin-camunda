@@ -11,7 +11,7 @@ plugins {
 }
 
 group 'io.datalense'
-version '0.1.0'
+version '0.2.0'
 
 repositories {
     mavenCentral()
@@ -49,6 +49,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation 'com.github.kittinunf.fuel:fuel:2.1.0'
     implementation 'com.github.kittinunf.fuel:fuel-gson:2.1.0'
+    implementation 'com.github.kittinunf.result:result:2.2.0'
 
     testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.4.2"
     testImplementation 'com.github.tomakehurst:wiremock:2.23.2'

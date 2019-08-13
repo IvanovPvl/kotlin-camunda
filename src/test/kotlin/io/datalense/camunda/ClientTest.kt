@@ -48,7 +48,10 @@ class ClientTest {
         assertNotNull(error)
 
         val e = Gson().fromJson(errorJson, Error::class.java)
-        assertEquals(e, error)
+        error.let { ex ->
+            assertEquals(e.type, ex.type)
+            assertEquals(e.message, ex.message)
+        }
     }
 
     @test fun externalTaskGet_Ok() {
@@ -160,7 +163,10 @@ class ClientTest {
         assertNotNull(error)
 
         val e = Gson().fromJson(errorJson, Error::class.java)
-        assertEquals(e, error)
+        error.let { ex ->
+            assertEquals(e.type, ex.type)
+            assertEquals(e.message, ex.message)
+        }
     }
 
     @test fun complete_Ok() {
@@ -195,7 +201,10 @@ class ClientTest {
         assertNull(response)
 
         val e = Gson().fromJson(errorJson, Error::class.java)
-        assertEquals(e, error)
+        error?.let { ex ->
+            assertEquals(e.type, ex.type)
+            assertEquals(e.message, ex.message)
+        }
     }
 
     @test fun handleFailure_Ok() {
@@ -230,7 +239,10 @@ class ClientTest {
         assertNull(response)
 
         val e = Gson().fromJson(errorJson, Error::class.java)
-        assertEquals(e, error)
+        error?.let { ex ->
+            assertEquals(e.type, ex.type)
+            assertEquals(e.message, ex.message)
+        }
     }
 
     @test fun handleUnlock_Ok() {
@@ -263,6 +275,9 @@ class ClientTest {
         assertNull(response)
 
         val e = Gson().fromJson(errorJson, Error::class.java)
-        assertEquals(e, error)
+        error?.let { ex ->
+            assertEquals(e.type, ex.type)
+            assertEquals(e.message, ex.message)
+        }
     }
 }
