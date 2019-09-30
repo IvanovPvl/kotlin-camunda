@@ -1,8 +1,9 @@
-package io.datalense.camunda
+package com.github.ivpal.camunda
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.google.gson.Gson
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import kotlin.random.Random
@@ -29,7 +30,7 @@ class ClientTest {
         wireMockServer.stop()
     }
 
-    @test fun externalTaskGet_NotFound() {
+    @test fun externalTaskGet_NotFound() = runBlocking {
         val id = "1"
         val errorJson = """{
             "type": "NotFoundException",
@@ -54,7 +55,7 @@ class ClientTest {
         }
     }
 
-    @test fun externalTaskGet_Ok() {
+    @test fun externalTaskGet_Ok() = runBlocking {
         val id = "1"
         val taskJson = """{
             "activityId": "",
@@ -110,7 +111,7 @@ class ClientTest {
         assertNull(error)
     }
 
-    @test fun fetchAndLock_Ok() {
+    @test fun fetchAndLock_Ok() = runBlocking {
         val tasksJson = """[{
             "id": "1",
             "variables": {
@@ -144,7 +145,7 @@ class ClientTest {
         assertNull(error)
     }
 
-    @test fun fetchAndLock_Error() {
+    @test fun fetchAndLock_Error() = runBlocking {
         val errorJson = """{
             "type": "ServerError",
             "message": "Internal server error"
@@ -169,10 +170,10 @@ class ClientTest {
         }
     }
 
-    @test fun complete_Ok() {
+    @test fun complete_Ok() = runBlocking {
         val id = "1"
         wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/complete"))
-            .willReturn(aResponse().withStatus(200)))
+            .willReturn(aResponse().withStatus(204)))
 
         val client = Client("http://localhost:$port/engine-rest")
         val variables = mapOf("some" to Variable("value", "String"))
@@ -181,7 +182,7 @@ class ClientTest {
         assertNull(error)
     }
 
-    @test fun complete_Error() {
+    @test fun complete_Error() = runBlocking {
         val id = "1"
         val errorJson = """{
             "type": "ServerError",
@@ -207,7 +208,7 @@ class ClientTest {
         }
     }
 
-    @test fun handleFailure_Ok() {
+    @test fun handleFailure_Ok() = runBlocking {
         val id = "1"
         wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/failure"))
             .willReturn(aResponse().withStatus(204)))
@@ -219,7 +220,7 @@ class ClientTest {
         assertNull(error)
     }
 
-    @test fun handleFailure_Error() {
+    @test fun handleFailure_Error() = runBlocking {
         val id = "1"
         val errorJson = """{
             "type": "ServerError",
@@ -245,7 +246,7 @@ class ClientTest {
         }
     }
 
-    @test fun handleUnlock_Ok() {
+    @test fun handleUnlock_Ok() = runBlocking {
         val id = "1"
         wireMockServer.stubFor(post(urlMatching(".*/external-task/$id/unlock"))
             .willReturn(aResponse().withStatus(204)))
@@ -256,7 +257,7 @@ class ClientTest {
         assertNull(error)
     }
 
-    @test fun handleUnlock_Error() {
+    @test fun handleUnlock_Error() = runBlocking {
         val id = "1"
         val errorJson = """{
             "type": "ServerError",

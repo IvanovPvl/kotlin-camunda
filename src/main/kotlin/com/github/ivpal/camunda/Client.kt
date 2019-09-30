@@ -1,4 +1,4 @@
-package io.datalense.camunda
+package com.github.ivpal.camunda
 
 import com.github.kittinunf.fuel.core.FuelManager
 

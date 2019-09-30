@@ -13,8 +13,10 @@ Simply clone this repository.
 ## Usage
 
 ```kotlin
-val client = Client("http://localhost:8080/engine-rest")
-val (task, error) = client.externalTask.get("1")
+runBlocking {
+    val client = Client("http://localhost:8080/engine-rest")
+    val (task, error) = client.externalTask.get("1")
+}
 ```
 
 ## License

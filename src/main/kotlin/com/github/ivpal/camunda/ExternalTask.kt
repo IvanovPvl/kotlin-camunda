@@ -1,12 +1,15 @@
-package io.datalense.camunda
+package com.github.ivpal.camunda
 
 import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.ResponseDeserializable
+import com.github.kittinunf.fuel.core.awaitResponseResult
+import com.github.kittinunf.fuel.gson.gsonDeserializerOf
 import com.github.kittinunf.fuel.gson.jsonBody
-import com.github.kittinunf.fuel.gson.responseObject
 import com.github.kittinunf.fuel.httpGet
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.result.Result
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 /**
  * Represent Camunda external task
@@ -30,9 +33,20 @@ data class ExternalTask(
     val topicName: String,
     val businessKey: String,
     val variables: Map<String, Variable>
-)
+) {
+    class ListDeserializer : ResponseDeserializable<List<ExternalTask>> {
+        override fun deserialize(content: String): List<ExternalTask> {
+            val type = object : TypeToken<List<ExternalTask>>() {}.type
+            return Gson().fromJson(content, type)
+        }
+    }
+}
 
-/**
+class UnitDeserializer : ResponseDeserializable<Unit> {
+    override fun deserialize(content: String) {}
+}
+
+    /**
  * Represent Camunda topic
  */
 data class Topic(
@@ -76,67 +90,69 @@ data class HandleFailureRequest(
     val retryTimeout: Int
 )
 
+
 interface ExternalTaskService {
     /**
      * Get [ExternalTask] by [id].
      */
-    fun get(id: String): Result<ExternalTask, CamundaException>
+    suspend fun get(id: String): Result<ExternalTask, CamundaException>
 
     /**
      * Fetches and locks a specific number of external tasks for execution by a worker.
      */
-    fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>, CamundaException>
+    suspend fun fetchAndLock(request: FetchAndLockRequest): Result<List<ExternalTask>, CamundaException>
 
     /**
      * Complete an external task and update process variables.
      */
-    fun complete(id: String, request: CompleteRequest): Result<Unit, CamundaException>
+    suspend fun complete(id: String, request: CompleteRequest): Result<Unit, CamundaException>
 
     /**
      * Report a failure to execute an external task.
      */
-    fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit, CamundaException>
+    suspend fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit, CamundaException>
 
     /**
      * Unlock an external task. Clears the task’s lock expiration time and worker id.
      */
-    fun unlock(id: String): Result<Unit, CamundaException>
+    suspend fun unlock(id: String): Result<Unit, CamundaException>
 }
 
 class ExternalTaskServiceImpl : ExternalTaskService {
-    override fun get(id: String): Result<ExternalTask, CamundaException> {
+    override suspend fun get(id: String): Result<ExternalTask, CamundaException> {
         val (_, _, result) = "/external-task/$id".httpGet()
-            .responseObject<ExternalTask>()
-
+            .awaitResponseResult(gsonDeserializerOf(ExternalTask::class.java))
         return result.fold({ Result.success(it) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun fetchAndLock(request: FetchAndLockRequest): Result<Array<ExternalTask>, CamundaException> {
+    override suspend fun fetchAndLock(request: FetchAndLockRequest): Result<List<ExternalTask>, CamundaException> {
         val (_, _, result) = "/external-task/fetchAndLock".httpPost()
             .jsonBody(request)
-            .responseObject<Array<ExternalTask>>()
+            .awaitResponseResult(ExternalTask.ListDeserializer())
 
         return result.fold({ Result.success(it) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun complete(id: String, request: CompleteRequest): Result<Unit, CamundaException> {
+    override suspend fun complete(id: String, request: CompleteRequest): Result<Unit, CamundaException> {
         val (_, _, result) = "/external-task/$id/complete".httpPost()
             .jsonBody(request)
-            .response()
+            .awaitResponseResult(UnitDeserializer())
 
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit, CamundaException> {
+    override suspend fun handleFailure(id: String, request: HandleFailureRequest): Result<Unit, CamundaException> {
         val (_, _, result) = "/external-task/$id/failure".httpPost()
             .jsonBody(request)
-            .response()
+            .awaitResponseResult(UnitDeserializer())
 
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
-    override fun unlock(id: String): Result<Unit, CamundaException> {
-        val (_, _, result) = "/external-task/$id/unlock".httpPost().response()
+    override suspend fun unlock(id: String): Result<Unit, CamundaException> {
+        val (_, _, result) = "/external-task/$id/unlock".httpPost()
+            .awaitResponseResult(UnitDeserializer())
+
         return result.fold({ Result.success(Unit) }, (ExternalTaskServiceImpl)::failure)
     }
 
