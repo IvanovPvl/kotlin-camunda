@@ -26,7 +26,7 @@ data class ExternalTask(
     val processDefinitionKey: String,
     val processInstanceId: String,
     val tenantId: String,
-    val retries: String,
+    val retries: Int,
     val suspended: Boolean,
     val workerId: String,
     val priority: Int,
@@ -52,7 +52,7 @@ class UnitDeserializer : ResponseDeserializable<Unit> {
 data class Topic(
     val topicName: String,
     val lockDuration: Int,
-    val variables: Array<String>
+    val variables: List<String>
 )
 
 /**
@@ -61,7 +61,9 @@ data class Topic(
 data class FetchAndLockRequest(
     val workerId: String,
     val maxTasks: Int,
-    val topics: Array<Topic>
+    val usePriority: Boolean? = null,
+    val asyncResponseTimeout: Int? = null,
+    val topics: List<Topic>
 )
 
 /**

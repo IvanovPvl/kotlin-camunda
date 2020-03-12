@@ -69,7 +69,7 @@ class ClientTest {
             "processDefinitionKey": "",
             "processInstanceId": "",
             "tenantId": "",
-            "retries": "",
+            "retries": 1,
             "suspended": false,
             "workerId": "",
             "priority": 0,
@@ -114,6 +114,20 @@ class ClientTest {
     @test fun fetchAndLock_Ok() = runBlocking {
         val tasksJson = """[{
             "id": "1",
+            "activityId": "1",
+            "activityInstanceId": "1",
+            "errorMessage": "message",
+            "errorDetails": "details",
+            "executionId": "1",
+            "lockExpirationTime": "2015-10-06T16:34:42.000+0200",
+            "processDefinitionId": "aProcessDefinitionId",
+            "processDefinitionKey": "aProcessDefinitionKey",
+            "processInstanceId": "aProcessInstanceId",
+            "tenantId": null,
+            "retries": 3,
+            "workerId": "aWorkerId",
+            "priority": 4,
+            "topicName": "createOrder",
             "variables": {
                 "variableName": {
                     "value": "some",
@@ -129,8 +143,8 @@ class ClientTest {
                     .withStatus(200)
                     .withBody(tasksJson)))
 
-        val topics = arrayOf(Topic("topicName", 1000, arrayOf("variableName")))
-        val request = FetchAndLockRequest("workerId", 1, topics)
+        val topics = listOf(Topic("topicName", 1000, listOf("variableName")))
+        val request = FetchAndLockRequest("workerId", 1, topics = topics)
         val client = Client("http://localhost:$port/engine-rest")
         val (tasks, error) = client.externalTask.fetchAndLock(request)
 
@@ -159,7 +173,13 @@ class ClientTest {
                     .withBody(errorJson)))
 
         val client = Client("http://localhost:$port/engine-rest")
-        val (tasks, error) = client.externalTask.fetchAndLock(FetchAndLockRequest("", 0, emptyArray()))
+        val (tasks, error) = client.externalTask.fetchAndLock(
+            FetchAndLockRequest(
+                "",
+                0,
+                topics = emptyList<Topic>()
+            )
+        )
         assertNull(tasks)
         assertNotNull(error)
 
