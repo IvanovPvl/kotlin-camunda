@@ -1,4 +1,4 @@
-package com.github.ivpal.camunda
+package com.github.ivpal.camunda.client
 
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.ResponseDeserializable

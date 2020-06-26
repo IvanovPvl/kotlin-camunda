@@ -1,4 +1,4 @@
-package com.github.ivpal.camunda
+package com.github.ivpal.camunda.client
 
 import com.github.kittinunf.fuel.core.FuelManager
 
@@ -16,7 +16,8 @@ class Client(path: String, timeout: Int = 5000) {
     /**
      * Get [ExternalTaskService].
      */
-    val externalTask: ExternalTaskService = ExternalTaskServiceImpl()
+    val externalTask: ExternalTaskService =
+        ExternalTaskServiceImpl()
 }
 
 data class Error(val type: String, val message: String)

@@ -1,5 +1,6 @@
 package com.github.ivpal.camunda
 
+import com.github.ivpal.camunda.client.*
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.*
 import com.google.gson.Gson
@@ -143,8 +144,15 @@ class ClientTest {
                     .withStatus(200)
                     .withBody(tasksJson)))
 
-        val topics = listOf(Topic("topicName", 1000, listOf("variableName")))
-        val request = FetchAndLockRequest("workerId", 1, topics = topics)
+        val topics = listOf(
+            Topic(
+                "topicName",
+                1000,
+                listOf("variableName")
+            )
+        )
+        val request =
+            FetchAndLockRequest("workerId", 1, topics = topics)
         val client = Client("http://localhost:$port/engine-rest")
         val (tasks, error) = client.externalTask.fetchAndLock(request)
 
@@ -197,7 +205,9 @@ class ClientTest {
 
         val client = Client("http://localhost:$port/engine-rest")
         val variables = mapOf("some" to Variable("value", "String"))
-        val (response, error) = client.externalTask.complete(id, CompleteRequest("workerId", variables))
+        val (response, error) = client.externalTask.complete(id,
+            CompleteRequest("workerId", variables)
+        )
         assertEquals(Unit, response)
         assertNull(error)
     }
@@ -218,7 +228,9 @@ class ClientTest {
 
         val client = Client("http://localhost:$port/engine-rest")
         val variables = mapOf("some" to Variable("value", "String"))
-        val (response, error) = client.externalTask.complete(id, CompleteRequest("workerId", variables))
+        val (response, error) = client.externalTask.complete(id,
+            CompleteRequest("workerId", variables)
+        )
         assertNull(response)
 
         val e = Gson().fromJson(errorJson, Error::class.java)
@@ -234,7 +246,8 @@ class ClientTest {
             .willReturn(aResponse().withStatus(204)))
 
         val client = Client("http://localhost:$port/engine-rest")
-        val request = HandleFailureRequest("workerId", "Error", 1, 1000)
+        val request =
+            HandleFailureRequest("workerId", "Error", 1, 1000)
         val (response, error) = client.externalTask.handleFailure(id, request)
         assertEquals(Unit, response)
         assertNull(error)
@@ -255,7 +268,8 @@ class ClientTest {
                     .withBody(errorJson)))
 
         val client = Client("http://localhost:$port/engine-rest")
-        val request = HandleFailureRequest("workerId", "Error", 1, 1000)
+        val request =
+            HandleFailureRequest("workerId", "Error", 1, 1000)
         val (response, error) = client.externalTask.handleFailure(id, request)
         assertNull(response)
 
