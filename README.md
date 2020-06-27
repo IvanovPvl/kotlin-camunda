@@ -13,12 +13,25 @@ Simply clone this repository.
 ## Usage
 
 ```kotlin
-runBlocking {
-    val client = Client("http://localhost:8080/engine-rest")
-    val (task, error) = client.externalTask.get("1")
+suspend fun main() {
+    val configuration = WorkerConfiguration("workerId", "http://localhost:8080/engine-rest")
+    val worker = Worker(configuration)
+    worker.addHandler(SimpleHandler())
+    worker.run()
+}
+
+class SimpleHandler : ExternalTaskHandler {
+    override val topics = listOf("greeting")
+
+    override suspend fun handle(task: ExternalTask): Result<Map<String, Variable>, Exception> {
+        val name = task.variables["name"]?.value as String
+        return Result.of(
+            mapOf("reply" to Variable("Hello, $name", "String"))
+        )
+    }
 }
 ```
 
 ## License
 
-[MIT](LICENSE) © 2019 Pavel Ivanov
+[MIT](LICENSE) © 2019 - 2020 Pavel Ivanov
