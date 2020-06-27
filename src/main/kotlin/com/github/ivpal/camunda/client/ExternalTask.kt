@@ -51,8 +51,8 @@ class UnitDeserializer : ResponseDeserializable<Unit> {
  */
 data class Topic(
     val topicName: String,
-    val lockDuration: Int,
-    val variables: List<String>
+    val lockDuration: Long,
+    val variables: List<String>? = null
 )
 
 /**
@@ -87,11 +87,10 @@ data class CompleteRequest(
  */
 data class HandleFailureRequest(
     val workerId: String,
-    val errorMessage: String,
+    val errorMessage: String?,
     val retries: Int,
-    val retryTimeout: Int
+    val retryTimeout: Long
 )
-
 
 interface ExternalTaskService {
     /**
